@@ -234,5 +234,6 @@ flycheck_*.el
 
 # projectiles files
 .projectile
+.idea
 
 
