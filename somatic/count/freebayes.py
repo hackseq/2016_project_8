@@ -1,6 +1,10 @@
 from __future__ import print_function # Python 2.x
 import subprocess
 
+"""
+This is a deprecated.
+
+"""
 
 def execute(cmd):
     """
