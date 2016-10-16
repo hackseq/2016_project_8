@@ -1,0 +1,3 @@
+"""
+Configurations for your setup
+"""
