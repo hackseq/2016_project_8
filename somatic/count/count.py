@@ -26,7 +26,6 @@ Options:
     -h --help   Show this message.
 '''
 
-
 def error(msg):
     print msg
     sys.exit(1)
