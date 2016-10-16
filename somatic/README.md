@@ -45,3 +45,11 @@ Wrapper around count_position() which loops it on all the the shortlisted positi
 ## write_output
 
 Outputs into tabular format for downstream statistical analyses and sanity checks.
+
+## Output Format:
+
+Tabular output with the following columns:
+
+chrom, pos, h1_ref, h1_alt, h2_ref, h2_alt, un_ref, un_alt
+
+
