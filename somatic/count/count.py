@@ -53,7 +53,7 @@ def get_counts_for_record(vcf_record, bam):
     alleles = tk_io.get_record_alt_alleles(rec)
     ref = tk_io.get_record_ref(rec)
     r = get_allele_read_info(rec.CHROM, rec.POS, ref, alleles, 30, p0_bam, fa)
-    r
+
     
 # The counts of each allele on each haplotype
 def get_allele_read_info(chrom, pos, ref, alt_alleles, min_mapq, bam, 

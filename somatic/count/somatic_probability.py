@@ -1,19 +1,9 @@
-
-# coding: utf-8
-
-# In[52]:
-
 import numpy
 import scipy.stats
 
-
-# In[266]:
-
+__all__ = ['g0_likelihood', 'g1_likelihood', 'g1_likelihood', 'max_likelihood']
 
 test_table = { 'h1': { 'ref': 99, 'alt': 5}, 'h2': {'ref': 99, 'alt': 7}}
-
-
-# In[267]:
 
 def g0_likelihood(table, error_rate=0.001):
     n_v1 = table['h1']['ref'] + table['h1']['alt']
@@ -49,7 +39,7 @@ def g1_likelihood(table, error_rate = 0.001, homozygous=False):
     return v1 * v2
 
 
-def g2_likelihood(table, error_rate = 0.001):
+def g1_likelihood(table, error_rate = 0.001):
     ''' Outputs the likelihood value for Case 2: Somatic variant.
     '''
     
@@ -117,27 +107,8 @@ def max_likelihood(table):
             maximum = max_likelihood
             maximum_model = max_model
             maximum_likelihood_error = error_rate
-            
     print("Model: {0}, with error rate: {1}, had likelihood: {2}".format(maximum_model, maximum_likelihood_error, maximum))
 
-
-# In[272]:
-
-scipy.stats.binom.pmf(3, 10, 0.1)
-
-
-# In[269]:
-
-print test_table
-max_likelihood(test_table)
-
-
-# In[ ]:
-
-
-
-
-# In[ ]:
-
-
-
+# scipy.stats.binom.pmf(3, 10, 0.1)
+# print test_table
+# max_likelihood(test_table)
