@@ -7,7 +7,7 @@ import tenkit.bam as tk_bam
 import pandas
 
 
-def genreate_csv_table(counts):
+def generate_csv_table(counts):
     h1_ref = []
     h1_alt = []
     h2_ref = []
@@ -32,8 +32,10 @@ def genreate_csv_table(counts):
         'h1_alt': h1_alt,
         'h2_ref': h2_ref,
         'h2_alt': h2_alt,
+        'un_ref': un_ref,
+        'un_alt': un_alt
     })
-    df.to_csv('/hackseq/team8somatic/count_table.csv')  # TODO get this path from config
+    df.to_csv('/hackseq/team8somatic/count_table.csv', index=False)  # TODO get this path from config
 
 
 def get_all_counts(px_vcf, bam, fa):
@@ -45,13 +47,9 @@ def get_all_counts(px_vcf, bam, fa):
     :return: a dict with all counts
     """
     counts = []
-    i = 0
     for vcf in px_vcf:
         record = get_counts_for_record(vcf, px_bam, fa)
         counts.append(record)
-        i += 1
-        if i > 20:
-            break
     return counts
 
 def get_counts_for_record(vcf_rec, bam, fa):
@@ -87,6 +85,9 @@ def get_allele_read_info(chrom, pos, ref, alt_alleles, min_mapq, bam,
     :param gap_extend:
     :return:
     """
+
+    if not chrom.startswith('chr'):
+        chrom = 'chr' + chrom
 
     all_alleles = [ref] + alt_alleles
     counts = {'h1': [0 for x in all_alleles], 
@@ -147,7 +148,8 @@ if __name__ == '__main__':
     ref = '/hackseq/hg19/refdata-hg19-2.1.0/fasta/genome.fa'
     fa = pyfasta.Fasta(ref)
     # Open a VCF file
-    vcf_path = '/hackseq/team8somatic/super-vcf-out2.vcf'
+    # vcf_path = '/hackseq/team8somatic/super-vcf-out2.vcf'
+    vcf_path = '/hackseq/HCC1954_Exome_Data_for_HackSeq/749709.vcf.gz'
     px_vcf = vcf.Reader(open(vcf_path))
     vcf_rec = px_vcf.next()
     # Open a BAM file
