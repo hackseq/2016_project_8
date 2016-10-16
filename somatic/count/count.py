@@ -8,6 +8,12 @@ import pandas
 
 
 def generate_csv_table(counts, csv_path):
+    """
+    Get the CSV file for the counts produced in get_all_counts()
+    :param counts: list of count dicts
+    :param csv_path: path to the csv file
+    :return: generates file in csv_path
+    """
     h1_ref = []
     h1_alt = []
     h2_ref = []
@@ -152,17 +158,3 @@ def get_allele_read_info(chrom, pos, ref, alt_alleles, min_mapq, bam,
 
 if __name__ == '__main__':
     pass
-    # # Open the reference
-    # ref = '/hackseq/hg19/refdata-hg19-2.1.0/fasta/genome.fa'
-    # fa = pyfasta.Fasta(ref)
-    # # Open a VCF file
-    # # vcf_path = '/hackseq/team8somatic/super-vcf-out2.vcf'
-    # vcf_path = '/hackseq/HCC1954_Exome_Data_for_HackSeq/749709.vcf.gz'
-    # px_vcf = vcf.Reader(open(vcf_path))
-    # vcf_rec = px_vcf.next()
-    # # Open a BAM file
-    # bam = '/hackseq/HCC1954_Exome_Data_for_HackSeq/HCC1954_0pct_phased_possorted.bam'
-    # px_bam = pysam.Samfile(bam)
-    # # get_counts_for_record(vcf_rec, px_bam, fa)
-    # counts = get_all_counts(px_vcf, px_bam, fa)
-    # generate_csv_table(counts, '/hackseq/team8somatic/count_table_test.csv')
