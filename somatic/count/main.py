@@ -1,12 +1,46 @@
+#!/usr/bin/env python
+#
+#
 """
-Hopefully a main file to run everything.
+Main entry point
 """
-
+import doctopt
 from freebayes import run_freebayes
+from count import get_all_counts, generate_csv_table
+
+__doc__ = '''
+Get the counts of all - alt/ref, chrom, pos
+
+Usage:
+    main.py <ref_path> <vcf_path> <bam_path> <output_csv_path>
+
+Arguments:
+    ref_path            Path to the reference genome fasta
+    vcf_path            Path to the VCF file for position reads
+    bam_path            Path to the BAM file
+    output_csv_path     Path of the CSV file you want for output
+
+Options:
+    -h --help   Show this message.
+'''
+
+def error(msg):
+    print msg
+    sys.exit(1)
+
+def fixpath(path):
+    return os.path.abspath(os.path.expandvars(os.path.expanduser(path)))
+
+def run():
+    args = docopt.docopt(__doc__, version=" ")  # do not remove space
+    ref_path = fixpath(args["<ref_path>"])
+    vcf_path = fixpath(args["<vcf_path>"])
+    bam_path = fixpath(args["<bam_path>"])
+    output_csv_path = fixpath(args["<output_csv_path>"])
+
+    counts = get_all_counts(vcf_path, bam_path, ref_path)
+    generate_csv_table(counts, output_csv_path)
 
 
 if __name__ == '__main__':
-    run_freebayes('/hackseq/hg19/refdata-hg19-2.1.0/fasta/genome.fa',
-                  '/hackseq/team8somatic/super-vcf-out2.vcf',
-                  '/hackseq/team8somatic/bed_files/exome_chr22.bed',
-                  '/hackseq/HCC1954_Exome_Data_for_HackSeq/HCC1954_0pct_phased_possorted.bam')
+    run()

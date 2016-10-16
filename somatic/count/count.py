@@ -7,7 +7,7 @@ import tenkit.bam as tk_bam
 import pandas
 
 
-def generate_csv_table(counts):
+def generate_csv_table(counts, csv_path):
     h1_ref = []
     h1_alt = []
     h2_ref = []
@@ -35,10 +35,10 @@ def generate_csv_table(counts):
         'un_ref': un_ref,
         'un_alt': un_alt
     })
-    df.to_csv('/hackseq/team8somatic/count_table.csv', index=False)  # TODO get this path from config
+    df.to_csv(csv_path, index=False)
 
 
-def get_all_counts(px_vcf, bam, fa):
+def get_all_counts(vcf_path, bam_path, ref):
     """
     get the count dict for all
     :param px_vcf:
@@ -46,9 +46,14 @@ def get_all_counts(px_vcf, bam, fa):
     :param fa:
     :return: a dict with all counts
     """
+
+    fa = pyfasta.Fasta(ref)
+    px_vcf = vcf.Reader(open(vcf_path))
+    px_bam = pysam.Samfile(bam_path)
+
     counts = []
-    for vcf in px_vcf:
-        record = get_counts_for_record(vcf, px_bam, fa)
+    for v in px_vcf:
+        record = get_counts_for_record(v, px_bam, fa)
         counts.append(record)
     return counts
 
@@ -157,4 +162,4 @@ if __name__ == '__main__':
     px_bam = pysam.Samfile(bam)
     # get_counts_for_record(vcf_rec, px_bam, fa)
     counts = get_all_counts(px_vcf, px_bam, fa)
-    genreate_csv_table(counts)
+    generate_csv_table(counts, '/hackseq/team8somatic/count_table_749709.csv')
