@@ -1,42 +1,54 @@
-
-# coding: utf-8
-
-# In[48]:
-
-# tour of pysam
-import pysam
+from __future__ import print_function # Python 2.x
+# import pysam
 import vcf
 import tenkit
 import pyfasta
 import tenkit.bio_io as tk_io
 import tenkit.bam as tk_bam
+import subprocess
 
 
-# In[66]:
+def execute(cmd):
+    popen = subprocess.Popen(cmd, stdout=subprocess.PIPE, universal_newlines=True)
+    stdout_lines = iter(popen.stdout.readline, "")
+    for stdout_line in stdout_lines:
+        yield stdout_line
+
+    popen.stdout.close()
+    return_code = popen.wait()
+    if return_code != 0:
+        raise subprocess.CalledProcessError(return_code, cmd)
+
+
+def run_freebayes(reference_path, out_vcf, bed_path, bam_path):
+    """
+    Use freebayes to create a VCF file
+    :param reference_path: path to the reference file
+    :param out_vcf: path to the output vcf file
+    :param bed_path: path to the bed file
+    :param bam_path: path to the bam file
+    :return: VCF file as output on disk
+    """
+    command = ['freebayes', '-f', reference_path,
+               '-0', '-C', '3', '-F', '0.03', '--pooled-continuous', '--pooled-discrete',
+               '--min-coverage', '10', '-v', out_vcf, '-t', bed_path, '-b', bam_path]
+    for output in execute(command):
+        print(output)
 
 # Open a BAM file
-pct0 = "/hackseq/HCC1954_Exome_Data_for_HackSeq/HCC1954_0pct_phased_possorted.bam"
-p0_bam = pysam.Samfile(pct0)
+# pct0 = "/hackseq/HCC1954_Exome_Data_for_HackSeq/HCC1954_0pct_phased_possorted.bam"
+# p0_bam = pysam.Samfile(pct0)
 
-
-# In[67]:
 
 # Open a VCF file
-pct0v = "/hackseq/HCC1954_Exome_Data_for_HackSeq/HCC1954_0pct_snpindel.vcf.gz"
-p0_vcf = vcf.Reader(open(pct0v))
+# pct0v = "/hackseq/HCC1954_Exome_Data_for_HackSeq/HCC1954_0pct_snpindel.vcf.gz"
+# p0_vcf = vcf.Reader(open(pct0v))
 
-
-# In[51]:
 
 # Open the reference
-fa = pyfasta.Fasta("/hackseq/hg19/refdata-hg19-2.1.0/fasta/genome.fa")
+# fa = pyfasta.Fasta("/hackseq/hg19/refdata-hg19-2.1.0/fasta/genome.fa")
 
-
-# In[1]:
-
-#
-# Get the table h1/h2 ref/alt counts for a variant in vcf_record in the given bam file. 
-#
+# Get the table h1/h2 ref/alt counts for a variant in vcf_record in the given bam file.
 def get_counts_for_record(vcf_record, bam):
     alleles = tk_io.get_record_alt_alleles(rec)
     ref = tk_io.get_record_ref(rec)
@@ -83,7 +95,7 @@ def get_allele_read_info(chrom, pos, ref, alt_alleles, min_mapq, bam,
         elif hap == None:
             hap = "un"
         else:
-            print "unknown hap: %s" % str(hap)
+            print("unknown hap: %s" % str(hap))
                 
         # This aligns the read sequence to both alleles to avoid alignment artifacts
         allele_index_in_read = tk_bam.read_contains_allele_sw(ref, all_alleles, pos, 
@@ -99,37 +111,15 @@ def get_allele_read_info(chrom, pos, ref, alt_alleles, min_mapq, bam,
     counts_reformat = { k: {'ref': v[0], 'alt': v[1]} for (k,v) in counts.items() }               
     return counts_reformat
 
-
-# In[59]:
-
-rec = p0_vcf.next()
-
-
-# In[60]:
-
-rec.POS
+# rec = p0_vcf.next()
+# alleles = tk_io.get_record_alt_alleles(rec)
+# ref = tk_io.get_record_ref(rec)
+# r = get_allele_read_info(rec.CHROM, rec.POS, ref, alleles, 30, p0_bam, fa)
+# r = get_allele_read_info('chr17', 41258433, 'G', ['T'], 30, p0_bam, fa)
+# get_ipython().magic(u'pinfo2 tk_io.get_read_haplotype')
 
 
-# In[61]:
-
-alleles = tk_io.get_record_alt_alleles(rec)
-ref = tk_io.get_record_ref(rec)
-r = get_allele_read_info(rec.CHROM, rec.POS, ref, alleles, 30, p0_bam, fa)
-r
-
-
-# In[68]:
-
-r = get_allele_read_info('chr17', 41258433, 'G', ['T'], 30, p0_bam, fa)
-r
-
-
-# In[24]:
-
-get_ipython().magic(u'pinfo2 tk_io.get_read_haplotype')
-
-
-# In[ ]:
-
-
-
+if __name__ == '__main__':
+    run_freebayes('/hackseq/hg19/refdata-hg19-2.1.0/fasta/genome.fa', '/hackseq/team8somatic/super-vcf-out2.vcf',
+                  '/hackseq/team8somatic/bed_files/exome_chr22.bed',
+                  '/hackseq/HCC1954_Exome_Data_for_HackSeq/HCC1954_0pct_phased_possorted.bam')
