@@ -4,6 +4,7 @@
 """
 Main entry point
 """
+import os
 import docopt
 from freebayes import run_freebayes
 from count import get_all_counts, generate_csv_table
