@@ -55,7 +55,11 @@ def main():
 test_table = { 'h1': { 'ref': 99, 'alt': 5}, 'h2': {'ref': 99, 'alt': 7}}
 
 
-def g0_likelihood(table, error_rate=0.001):
+def g0_likelihood(table, error_rate=None):
+
+    if error_rate is None:
+        error_rate = get_optimal_error_rate(table, (0,0))
+
     n_v1 = table['h1']['ref'] + table['h1']['alt']
     v1 = scipy.stats.binom.pmf(table['h1']['alt'], n_v1, error_rate)
 
@@ -63,18 +67,76 @@ def g0_likelihood(table, error_rate=0.001):
     v2 = scipy.stats.binom.pmf(table['h2']['alt'], n_v2, error_rate)
     
     return v1 * v2
+
+
+def get_optimal_error_rate(table, mode):
+    ''' Calculates the optimal max-likelihood error rate.
+        @param mode 2-element tuple representing the error base rates for haplotypes 1 and 2 respectively.
+                    Haplotype order is as in table. Examples: (0,0) for g0, (1,0) or (0,1) for heterozygous,
+                    (1,1) for homozygous. Use None for somatic variant, i.e. (0, None) for h2 somatic.
+    '''
+
+    keys = ['h1', 'h2']
+    calculation_dict = {}
+
+    for i in range(2):
+        ref = table[keys[i]]['ref']
+        alt = table[keys[i]]['alt']
+        error_mode = mode[i]
+
+        if error_mode is None:
+            num = 0.0
+            denom = 0.0
+        elif error_mode == 0:
+            num = float(alt)
+            denom = float(ref + alt)
+        elif error_mode == 1:
+            num = float(ref)
+            denom = float(ref + alt)
+
+        calculation_dict[keys[i]] = {'num': num, 'denom': denom}
+
+    totalNum = sum([calculation_dict[haplo]['num'] for haplo in ('h1', 'h2')]) 
+    totalDenom = sum([calculation_dict[haplo]['denom'] for haplo in ('h1', 'h2')]) 
+
+    if totalDenom == 0:
+        optimal_error = 0.1
+    else:
+        optimal_error = float(totalNum) / float(totalDenom)
+
+    if optimal_error > 0.1:
+        optimal_error = 0.1
+
+    if mode == (0,0):
+        print(table)
+        print(calculation_dict)
+        print(mode)
+        print(totalNum)
+        print(totalDenom)
+        print('optimal error rate is {0}'.format(optimal_error))
+
+    return optimal_error
+        
     
-    
-def g1_likelihood(table, error_rate = 0.001, homozygous=False):
+def g1_likelihood(table, error_rate = None, homozygous=False):
     ''' Outputs the likelihood value for Case 1: Germline variant.
         @param homozygous Boolean value indicating whether the germline variant is homozygous
+        @param error_rate If float, calculates based on specific error rate. If None, chooses max-likelihood error rate.
     '''
-    
+
     h1_vaf = float(table['h1']['alt']) / float(table['h1']['ref'] + table['h1']['alt'])
     h2_vaf = float(table['h2']['alt']) / float(table['h2']['ref'] + table['h2']['alt'])
     
     higher_vaf_haplotype = 'h1' if h1_vaf > h2_vaf else 'h2'
     lower_vaf_haplotype = 'h1' if higher_vaf_haplotype == 'h2' else 'h2'
+
+    if error_rate is None:
+        if homozygous:
+            error_mode = (1,1)
+        else:
+            error_mode = (1,0) if higher_vaf_haplotype == 'h1' else (0,1)
+
+        error_rate = get_optimal_error_rate(table, error_mode)
     
     # Haplotype 1
     n_v1 = table[higher_vaf_haplotype]['ref'] + table[higher_vaf_haplotype]['alt']
@@ -89,10 +151,10 @@ def g1_likelihood(table, error_rate = 0.001, homozygous=False):
     return v1 * v2
 
 
-def g2_likelihood(table, error_rate = 0.001):
+def g2_likelihood(table, error_rate = None):
     ''' Outputs the likelihood value for Case 2: Somatic variant.
     '''
-    
+
     likelihoods = [(g2_likelihood_helper(table, float(var_percent)/100, error_rate), var_percent) for var_percent in range(5, 95, 5)]
     
     for variant_percent in range(5, 95, 5):
@@ -111,6 +173,10 @@ def g2_likelihood_helper(table, variant_frequency, error_rate = 0.001):
     
     higher_vaf_haplotype = 'h1' if h1_vaf > h2_vaf else 'h2'
     lower_vaf_haplotype = 'h1' if higher_vaf_haplotype == 'h2' else 'h2'
+
+    if error_rate is None:
+        error_mode = (None, 0) if higher_vaf_haplotype == 'h1' else (0, None)
+        error_rate = get_optimal_error_rate(table, error_mode)
     
     # Haplotype 1: higher VAF haplotype
     n_v1 = table[higher_vaf_haplotype]['ref'] + table[higher_vaf_haplotype]['alt']
@@ -126,7 +192,7 @@ def g2_likelihood_helper(table, variant_frequency, error_rate = 0.001):
     return v1 * v2
     
     
-def likelihood_per_error_rate(table, error_rate=0.001):
+def likelihood_per_error_rate(table, error_rate=None):
     prior_g0 = 1
     prior_g1 = 1
     prior_g2 = 1
@@ -143,34 +209,24 @@ def likelihood_per_error_rate(table, error_rate=0.001):
     
 
 def max_likelihood(table):
-    maximum = -1
-    maximum_model = None
-    maximum_likelihood_error = -1
-    best_param = -1
-    best_fit = {}
+    #maximum = -1
+    #maximum_model = None
+    #maximum_likelihood_error = -1
+    #best_param = -1
+    #best_fit = {}
     
-    for i in range(1, 100):
-        error_rate = float(i)/1000
-        likelihood_dict = likelihood_per_error_rate(table, error_rate)
-        
-        ((max_likelihood, param), model_name) = max((likelihood, name) for (name, likelihood) in likelihood_dict.items())
-        if max_likelihood > maximum:
-            maximum = max_likelihood
-            maximum_model = model_name
-            maximum_likelihood_error = error_rate
-            best_param = param
-            best_fit = likelihood_dict
+    likelihood_dict = likelihood_per_error_rate(table, error_rate=None)
+    ((max_likelihood, param), model_name) = max((likelihood, name) for (name, likelihood) in likelihood_dict.items())
+    
+    z = sum(prob for (prob, param) in likelihood_dict.values())
+    cols = {    'g0': likelihood_dict['g0'][0]/z, 
+                'g1_het': likelihood_dict['g1_het'][0]/z, 
+                'g1_hom': likelihood_dict['g1_hom'][0]/z, 
+                'g2': likelihood_dict['g2'][0]/z,
+                'best_model': model_name, 
+                'param': param }
 
-
-    z = sum(prob for (prob, param) in best_fit.values())
-    cols = {    'g0': best_fit['g0'][0]/z, 
-                'g1_het': best_fit['g1_het'][0]/z, 
-                'g1_hom': best_fit['g1_hom'][0]/z, 
-                'g2': best_fit['g2'][0]/z,
-                'best_model': maximum_model, 
-                'param': best_param }
-    print cols
-    print("Model: {0}, with error rate: {1}, had likelihood: {2}".format(maximum_model, maximum_likelihood_error, maximum))
+    print("Model: {0} had likelihood: {1}".format(model_name, max_likelihood))
     
     return cols
 
