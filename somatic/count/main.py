@@ -2,7 +2,7 @@
 Hopefully a main file to run everything.
 """
 
-from count import run_freebayes
+from freebayes import run_freebayes
 
 
 if __name__ == '__main__':

@@ -1,54 +1,34 @@
-from __future__ import print_function # Python 2.x
 import pysam
 import vcf
 import tenkit
 import pyfasta
 import tenkit.bio_io as tk_io
 import tenkit.bam as tk_bam
-import subprocess
 
 
-def execute(cmd):
-    popen = subprocess.Popen(cmd, stdout=subprocess.PIPE, universal_newlines=True)
-    stdout_lines = iter(popen.stdout.readline, "")
-    for stdout_line in stdout_lines:
-        yield stdout_line
-
-    popen.stdout.close()
-    return_code = popen.wait()
-    if return_code != 0:
-        raise subprocess.CalledProcessError(return_code, cmd)
-
-
-def run_freebayes(reference_path, out_vcf, bed_path, bam_path):
+def get_counts_for_record(vcf_rec, bam, fa):
     """
-    Use freebayes to create a VCF file
-    :param reference_path: path to the reference file
-    :param out_vcf: path to the output vcf file
-    :param bed_path: path to the bed file
-    :param bam_path: path to the bam file
-    :return: VCF file as output on disk
+    Get the table h1/h2 ref/alt counts for a variant in vcf_record in the given bam file.
+    :param vcf_rec:
+    :param bam:
+    :param fa:
+    :return:
     """
-    command = ['freebayes', '-f', reference_path,
-               '-0', '-C', '3', '-F', '0.03', '--pooled-continuous', '--pooled-discrete',
-               '--min-coverage', '10', '-v', out_vcf, '-t', bed_path, '-b', bam_path]
-    for output in execute(command):
-        print(output)
+    alleles = tk_io.get_record_alt_alleles(vcf_rec)
+    ref = tk_io.get_record_ref(vcf_rec)
+    print(vcf_rec.CHROM)
+    r = get_allele_read_info(vcf_rec.CHROM, vcf_rec.POS, ref, alleles, 30, bam, fa)
+    return r
 
-# Get the table h1/h2 ref/alt counts for a variant in vcf_record in the given bam file.
-def get_counts_for_record(vcf_record, bam, fa, rec):
-    alleles = tk_io.get_record_alt_alleles(rec)
-    ref = tk_io.get_record_ref(rec)
-    print(rec.CHROM)
-    r = get_allele_read_info(rec.CHROM, rec.POS, ref, alleles, 30, bam, fa)
+def get_all_counts(px_vcf, bam, fa):
+    for vcf in px_vcf:
+        record = get_counts_for_record(vcf_rec, px_bam, fa)
 
     
 # The counts of each allele on each haplotype
 def get_allele_read_info(chrom, pos, ref, alt_alleles, min_mapq, bam, 
                          reference_pyfasta, max_reads=2000, match = 1, 
                          mismatch = -4, gap_open = -6, gap_extend = -1):
-    if chrom.startswith('chr'):
-        chrom = int(chrom[3:])
 
     all_alleles = [ref] + alt_alleles
     
@@ -58,7 +38,9 @@ def get_allele_read_info(chrom, pos, ref, alt_alleles, min_mapq, bam,
     
     num_reads = 0
     qnames = set()
-    
+
+    # import pdb; pdb.set_trace()
+
     # Fetch all the reads
     for read in bam.fetch(chrom, pos, pos + 1):
         num_reads += 1
@@ -87,12 +69,13 @@ def get_allele_read_info(chrom, pos, ref, alt_alleles, min_mapq, bam,
             hap = "un"
         else:
             print("unknown hap: %s" % str(hap))
-                
+
         # This aligns the read sequence to both alleles to avoid alignment artifacts
         allele_index_in_read = tk_bam.read_contains_allele_sw(ref, all_alleles, pos, 
                                                               read, reference_pyfasta[chrom],
                                                               match = match, mismatch = mismatch, 
-                                                              gap_open = gap_open, gap_extend = gap_extend)
+                                                              gap_open = gap_open,
+                                                              gap_extend = gap_extend)
         for (allele_index, allele) in enumerate(all_alleles):
             if allele_index == allele_index_in_read:
                     
@@ -102,27 +85,17 @@ def get_allele_read_info(chrom, pos, ref, alt_alleles, min_mapq, bam,
     counts_reformat = { k: {'ref': v[0], 'alt': v[1]} for (k,v) in counts.items() }               
     return counts_reformat
 
-# rec = p0_vcf.next()
-# alleles = tk_io.get_record_alt_alleles(rec)
-# ref = tk_io.get_record_ref(rec)
-# r = get_allele_read_info(rec.CHROM, rec.POS, ref, alleles, 30, p0_bam, fa)
-# r = get_allele_read_info('chr17', 41258433, 'G', ['T'], 30, p0_bam, fa)
-# get_ipython().magic(u'pinfo2 tk_io.get_read_haplotype')
-
 
 if __name__ == '__main__':
-    # run_freebayes('/hackseq/hg19/refdata-hg19-2.1.0/fasta/genome.fa',
-    #               '/hackseq/team8somatic/super-vcf-out2.vcf',
-    #               '/hackseq/team8somatic/bed_files/exome_chr22.bed',
-    #               '/hackseq/HCC1954_Exome_Data_for_HackSeq/HCC1954_0pct_phased_possorted.bam')
-    ref = '/hackseq/hg19/refdata-hg19-2.1.0/fasta/genome.fa'
-    vcf_path = '/hackseq/team8somatic/super-vcf-out2.vcf'
-    bam = '/hackseq/HCC1954_Exome_Data_for_HackSeq/HCC1954_0pct_phased_possorted.bam'
-    # Open a BAM file
-    px_bam = pysam.Samfile(bam)
-    # Open a VCF file
-    px_vcf = vcf.Reader(open(vcf_path))
-    rec = px_vcf.next()
     # Open the reference
+    ref = '/hackseq/hg19/refdata-hg19-2.1.0/fasta/genome.fa'
     fa = pyfasta.Fasta(ref)
-    get_counts_for_record(px_vcf, px_bam, ref, rec)
+    # Open a VCF file
+    vcf_path = '/hackseq/team8somatic/super-vcf-out2.vcf'
+    px_vcf = vcf.Reader(open(vcf_path))
+    vcf_rec = px_vcf.next()
+    # Open a BAM file
+    bam = '/hackseq/HCC1954_Exome_Data_for_HackSeq/HCC1954_0pct_phased_possorted.bam'
+    px_bam = pysam.Samfile(bam)
+    # get_counts_for_record(vcf_rec, px_bam, fa)
+    get_all_counts(px_vcf, px_bam, fa)
