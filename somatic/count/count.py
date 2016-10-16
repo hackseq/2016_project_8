@@ -162,4 +162,4 @@ if __name__ == '__main__':
     px_bam = pysam.Samfile(bam)
     # get_counts_for_record(vcf_rec, px_bam, fa)
     counts = get_all_counts(px_vcf, px_bam, fa)
-    generate_csv_table(counts, '/hackseq/team8somatic/count_table_749709.csv')
+    generate_csv_table(counts, '/hackseq/team8somatic/count_table_test.csv')
