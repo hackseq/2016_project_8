@@ -42,7 +42,12 @@ def main():
 
     results = []
     for (i, r) in count_data.iterrows():
+        print("row {0}".format(i))
         table = { 'h1': { 'ref': r.h1_ref, 'alt': r.h1_alt }, 'h2': { 'ref': r.h2_ref, 'alt': r.h2_alt }}
+
+        # for now, skip cases with all 0's
+        if r.h1_ref == 0 and r.h1_alt == 0 and r.h2_ref == 0 and r.h2_alt == 0:
+            continue
 
         ml = max_likelihood(table)
         results.append(ml)
@@ -108,16 +113,23 @@ def get_optimal_error_rate(table, mode):
     if optimal_error > 0.1:
         optimal_error = 0.1
 
-    if mode == (0,0):
-        print(table)
-        print(calculation_dict)
-        print(mode)
-        print(totalNum)
-        print(totalDenom)
-        print('optimal error rate is {0}'.format(optimal_error))
-
     return optimal_error
         
+
+def get_higher_vaf_haplotype(table):
+    if table['h1']['alt'] == 0 and table['h1']['ref'] == 0:
+        return ('h2', 'h1')
+    elif table['h2']['alt'] == 0 and table['h2']['ref'] == 0:
+        return ('h1', 'h2')
+    else:
+        h1_vaf = float(table['h1']['alt']) / float(table['h1']['ref'] + table['h1']['alt'])
+        h2_vaf = float(table['h2']['alt']) / float(table['h2']['ref'] + table['h2']['alt'])
+    
+    higher_vaf_haplotype = 'h1' if h1_vaf > h2_vaf else 'h2'
+    lower_vaf_haplotype = 'h1' if higher_vaf_haplotype == 'h2' else 'h2'
+
+    return (higher_vaf_haplotype, lower_vaf_haplotype)
+
     
 def g1_likelihood(table, error_rate = None, homozygous=False):
     ''' Outputs the likelihood value for Case 1: Germline variant.
@@ -125,11 +137,7 @@ def g1_likelihood(table, error_rate = None, homozygous=False):
         @param error_rate If float, calculates based on specific error rate. If None, chooses max-likelihood error rate.
     '''
 
-    h1_vaf = float(table['h1']['alt']) / float(table['h1']['ref'] + table['h1']['alt'])
-    h2_vaf = float(table['h2']['alt']) / float(table['h2']['ref'] + table['h2']['alt'])
-    
-    higher_vaf_haplotype = 'h1' if h1_vaf > h2_vaf else 'h2'
-    lower_vaf_haplotype = 'h1' if higher_vaf_haplotype == 'h2' else 'h2'
+    (higher_vaf_haplotype, lower_vaf_haplotype) = get_higher_vaf_haplotype(table)
 
     if error_rate is None:
         if homozygous:
@@ -169,11 +177,7 @@ def g2_likelihood_helper(table, variant_frequency, error_rate = 0.001):
     ''' Helper function which calculates the likelihood values for Case 2: Somatic variant
     '''
     
-    h1_vaf = float(table['h1']['alt']) / float(table['h1']['ref'] + table['h1']['alt'])
-    h2_vaf = float(table['h2']['alt']) / float(table['h2']['ref'] + table['h2']['alt'])
-    
-    higher_vaf_haplotype = 'h1' if h1_vaf > h2_vaf else 'h2'
-    lower_vaf_haplotype = 'h1' if higher_vaf_haplotype == 'h2' else 'h2'
+    (higher_vaf_haplotype, lower_vaf_haplotype) = get_higher_vaf_haplotype(table)
 
     if error_rate is None:
         error_mode = (None, 0) if higher_vaf_haplotype == 'h1' else (0, None)
@@ -210,12 +214,6 @@ def likelihood_per_error_rate(table, error_rate=None):
     
 
 def max_likelihood(table):
-    #maximum = -1
-    #maximum_model = None
-    #maximum_likelihood_error = -1
-    #best_param = -1
-    #best_fit = {}
-    
     likelihood_dict = likelihood_per_error_rate(table, error_rate=None)
     ((max_likelihood, param), model_name) = max((likelihood, name) for (name, likelihood) in likelihood_dict.items())
     
@@ -227,7 +225,7 @@ def max_likelihood(table):
                 'best_model': model_name, 
                 'param': param }
 
-    print("Model: {0} had likelihood: {1}".format(model_name, max_likelihood))
+    #print("Model: {0} had likelihood: {1}".format(model_name, max_likelihood))
     
     return cols
 
