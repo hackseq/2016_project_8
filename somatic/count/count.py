@@ -1,5 +1,5 @@
 from __future__ import print_function # Python 2.x
-# import pysam
+import pysam
 import vcf
 import tenkit
 import pyfasta
@@ -35,30 +35,21 @@ def run_freebayes(reference_path, out_vcf, bed_path, bam_path):
     for output in execute(command):
         print(output)
 
-# Open a BAM file
-# pct0 = "/hackseq/HCC1954_Exome_Data_for_HackSeq/HCC1954_0pct_phased_possorted.bam"
-# p0_bam = pysam.Samfile(pct0)
-
-
-# Open a VCF file
-# pct0v = "/hackseq/HCC1954_Exome_Data_for_HackSeq/HCC1954_0pct_snpindel.vcf.gz"
-# p0_vcf = vcf.Reader(open(pct0v))
-
-
-# Open the reference
-# fa = pyfasta.Fasta("/hackseq/hg19/refdata-hg19-2.1.0/fasta/genome.fa")
-
 # Get the table h1/h2 ref/alt counts for a variant in vcf_record in the given bam file.
-def get_counts_for_record(vcf_record, bam):
+def get_counts_for_record(vcf_record, bam, fa, rec):
     alleles = tk_io.get_record_alt_alleles(rec)
     ref = tk_io.get_record_ref(rec)
-    r = get_allele_read_info(rec.CHROM, rec.POS, ref, alleles, 30, p0_bam, fa)
+    print(rec.CHROM)
+    r = get_allele_read_info(rec.CHROM, rec.POS, ref, alleles, 30, bam, fa)
 
     
 # The counts of each allele on each haplotype
 def get_allele_read_info(chrom, pos, ref, alt_alleles, min_mapq, bam, 
                          reference_pyfasta, max_reads=2000, match = 1, 
                          mismatch = -4, gap_open = -6, gap_extend = -1):
+    if chrom.startswith('chr'):
+        chrom = int(chrom[3:])
+
     all_alleles = [ref] + alt_alleles
     
     counts = {'h1': [0 for x in all_alleles], 
@@ -99,7 +90,7 @@ def get_allele_read_info(chrom, pos, ref, alt_alleles, min_mapq, bam,
                 
         # This aligns the read sequence to both alleles to avoid alignment artifacts
         allele_index_in_read = tk_bam.read_contains_allele_sw(ref, all_alleles, pos, 
-                                                              read, reference_pyfasta[chrom], 
+                                                              read, reference_pyfasta[chrom],
                                                               match = match, mismatch = mismatch, 
                                                               gap_open = gap_open, gap_extend = gap_extend)
         for (allele_index, allele) in enumerate(all_alleles):
@@ -120,6 +111,18 @@ def get_allele_read_info(chrom, pos, ref, alt_alleles, min_mapq, bam,
 
 
 if __name__ == '__main__':
-    run_freebayes('/hackseq/hg19/refdata-hg19-2.1.0/fasta/genome.fa', '/hackseq/team8somatic/super-vcf-out2.vcf',
-                  '/hackseq/team8somatic/bed_files/exome_chr22.bed',
-                  '/hackseq/HCC1954_Exome_Data_for_HackSeq/HCC1954_0pct_phased_possorted.bam')
+    # run_freebayes('/hackseq/hg19/refdata-hg19-2.1.0/fasta/genome.fa',
+    #               '/hackseq/team8somatic/super-vcf-out2.vcf',
+    #               '/hackseq/team8somatic/bed_files/exome_chr22.bed',
+    #               '/hackseq/HCC1954_Exome_Data_for_HackSeq/HCC1954_0pct_phased_possorted.bam')
+    ref = '/hackseq/hg19/refdata-hg19-2.1.0/fasta/genome.fa'
+    vcf_path = '/hackseq/team8somatic/super-vcf-out2.vcf'
+    bam = '/hackseq/HCC1954_Exome_Data_for_HackSeq/HCC1954_0pct_phased_possorted.bam'
+    # Open a BAM file
+    px_bam = pysam.Samfile(bam)
+    # Open a VCF file
+    px_vcf = vcf.Reader(open(vcf_path))
+    rec = px_vcf.next()
+    # Open the reference
+    fa = pyfasta.Fasta(ref)
+    get_counts_for_record(px_vcf, px_bam, ref, rec)
