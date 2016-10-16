@@ -1,3 +1,5 @@
+*.pem
+*.PEM
 *.DS_Store
 .AppleDouble
 .LSOverride
