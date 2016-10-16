@@ -22,5 +22,26 @@ Getting the longranger 'environment'. On EC2 instance:
 source /hackseq/longranger-2.1.1/sourceme.bash
 
 
-New content
+# Pipeline Planning
 
+## run_freebayes(ref, bam, bed, out_vcf) - Pat
+
+Runs freebayes to shortlist positions specified by a bed file.
+Processes the resulting VCF file into a simpler format with chrom, pos, ref, alt information.
+
+## count_position(pos, bam, ref) - Aman, Peng
+
+Taking one position and counts the haplotype 1 and haplotype 2 read counts.
+
+## model_positions(position_counts)
+
+Runs the statistical model on each position's read counts
+For each position, determines the max likelihood model.
+
+## call_all(position_list, bam, ref) - Aman
+
+Wrapper around count_position() which loops it on all the the shortlisted positions.
+
+## write_output
+
+Outputs into tabular format for downstream statistical analyses and sanity checks.
