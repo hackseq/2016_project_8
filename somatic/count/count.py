@@ -4,7 +4,55 @@ import tenkit
 import pyfasta
 import tenkit.bio_io as tk_io
 import tenkit.bam as tk_bam
+import pandas
 
+
+def genreate_csv_table(counts):
+    h1_ref = []
+    h1_alt = []
+    h2_ref = []
+    h2_alt = []
+    un_ref = []
+    un_alt = []
+    poss = []
+    chroms = []
+    for d in counts:
+        h1_ref.append(d.get('h1', None).get('ref', None))
+        h1_alt.append(d.get('h1', None).get('alt', None))
+        h2_ref.append(d.get('h2', None).get('ref', None))
+        h2_alt.append(d.get('h2', None).get('alt', None))
+        un_ref.append(d.get('un', None).get('ref', None))
+        un_alt.append(d.get('un', None).get('alt', None))
+        poss.append(d.get('pos', None))
+        chroms.append(d.get('chrom', None))
+    df = pandas.DataFrame({
+        'pos': poss,
+        'chrom': chroms,
+        'h1_ref': h1_ref,
+        'h1_alt': h1_alt,
+        'h2_ref': h2_ref,
+        'h2_alt': h2_alt,
+    })
+    df.to_csv('/hackseq/team8somatic/count_table.csv')  # TODO get this path from config
+
+
+def get_all_counts(px_vcf, bam, fa):
+    """
+    get the count dict for all
+    :param px_vcf:
+    :param bam:
+    :param fa:
+    :return: a dict with all counts
+    """
+    counts = []
+    i = 0
+    for vcf in px_vcf:
+        record = get_counts_for_record(vcf, px_bam, fa)
+        counts.append(record)
+        i += 1
+        if i > 20:
+            break
+    return counts
 
 def get_counts_for_record(vcf_rec, bam, fa):
     """
@@ -16,30 +64,37 @@ def get_counts_for_record(vcf_rec, bam, fa):
     """
     alleles = tk_io.get_record_alt_alleles(vcf_rec)
     ref = tk_io.get_record_ref(vcf_rec)
-    print(vcf_rec.CHROM)
     r = get_allele_read_info(vcf_rec.CHROM, vcf_rec.POS, ref, alleles, 30, bam, fa)
     return r
 
-def get_all_counts(px_vcf, bam, fa):
-    for vcf in px_vcf:
-        record = get_counts_for_record(vcf_rec, px_bam, fa)
 
-    
-# The counts of each allele on each haplotype
 def get_allele_read_info(chrom, pos, ref, alt_alleles, min_mapq, bam, 
                          reference_pyfasta, max_reads=2000, match = 1, 
                          mismatch = -4, gap_open = -6, gap_extend = -1):
+    """
+    The counts of each allele on each haplotype
+    :param chrom:
+    :param pos:
+    :param ref:
+    :param alt_alleles:
+    :param min_mapq:
+    :param bam:
+    :param reference_pyfasta:
+    :param max_reads:
+    :param match:
+    :param mismatch:
+    :param gap_open:
+    :param gap_extend:
+    :return:
+    """
 
     all_alleles = [ref] + alt_alleles
-    
     counts = {'h1': [0 for x in all_alleles], 
               'h2': [0 for x in all_alleles], 
               'un': [0 for x in all_alleles]}
     
     num_reads = 0
     qnames = set()
-
-    # import pdb; pdb.set_trace()
 
     # Fetch all the reads
     for read in bam.fetch(chrom, pos, pos + 1):
@@ -78,11 +133,12 @@ def get_allele_read_info(chrom, pos, ref, alt_alleles, min_mapq, bam,
                                                               gap_extend = gap_extend)
         for (allele_index, allele) in enumerate(all_alleles):
             if allele_index == allele_index_in_read:
-                    
                 if read.mapq >= min_mapq:
                     counts[hap][allele_index] += 1
-                    
-    counts_reformat = { k: {'ref': v[0], 'alt': v[1]} for (k,v) in counts.items() }               
+
+    counts_reformat = {k: {'ref': v[0], 'alt': v[1]} for (k,v) in counts.items()}
+    counts_reformat['chrom'] = chrom
+    counts_reformat['pos'] = pos
     return counts_reformat
 
 
@@ -98,4 +154,5 @@ if __name__ == '__main__':
     bam = '/hackseq/HCC1954_Exome_Data_for_HackSeq/HCC1954_0pct_phased_possorted.bam'
     px_bam = pysam.Samfile(bam)
     # get_counts_for_record(vcf_rec, px_bam, fa)
-    get_all_counts(px_vcf, px_bam, fa)
+    counts = get_all_counts(px_vcf, px_bam, fa)
+    genreate_csv_table(counts)
