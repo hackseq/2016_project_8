@@ -18,6 +18,7 @@ Usage:
 
 Arguments:
     count_file  Path to phased count data
+    result_file Path to output file
 
 Options:
     -h --help   Show this message.
