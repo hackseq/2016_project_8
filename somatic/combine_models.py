@@ -22,7 +22,7 @@ def combine_csvs(csv_labels):
             if not col in ('chrom', 'pos'):
                 df[col + "." + name] = sub_df
 
-    df.to_csv("combined.csv")
+    df.to_csv("combined.csv", index=False)
 
 
 if __name__ == "__main__":
