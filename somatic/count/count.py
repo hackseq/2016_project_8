@@ -64,7 +64,10 @@ def get_counts_for_record(vcf_rec, bam, fa):
     r = get_allele_read_info(vcf_rec.CHROM, vcf_rec.POS, ref, alleles, 30, bam, fa)
     r['ref'] = ref
     r['alt'] = alleles[0]
-    r['filter'] = ':'.join(vcf_rec.FILTER)  # TODO: ask Pat if : is ok here
+    filter_col_vcf = ':'.join(vcf_rec.FILTER)
+    if filter_col_vcf is None or filter_col_vcf.strip() == "":
+        filter_col_vcf = "PASS"  # PASS does not return a list and gets dropped
+    r['filter'] = filter_col_vcf
     return r
 
 def get_allele_read_info(chrom, pos, ref, alt_alleles, min_mapq, bam, 
