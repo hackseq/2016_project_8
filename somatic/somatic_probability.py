@@ -51,7 +51,7 @@ def main():
     df = pandas.DataFrame(results)
 
     final = pandas.concat([count_data, df], axis=1)
-    final.to_csv(result_path)
+    final.to_csv(result_path, index=False)
 
 
 test_table = { 'h1': { 'ref': 99, 'alt': 5}, 'h2': {'ref': 99, 'alt': 7}}
@@ -210,7 +210,8 @@ def likelihood_per_error_rate(table, error_rate=None):
     g0 = g0_likelihood(table, error_rate) * prior_g0
     g1_het = g1_likelihood(table, error_rate, homozygous=False) * prior_g1
     g1_hom = g1_likelihood(table, error_rate, homozygous=True) * prior_g1
-    g2 = g2_likelihood(table, error_rate) * prior_g2
+    g2tuple = g2_likelihood(table, error_rate)
+    g2 = (g2tuple[0] * prior_g2, g2tuple[1])
     
     return {"g0": (g0, 0.0), 
             "g1_het": (g1_het, 0.0),
