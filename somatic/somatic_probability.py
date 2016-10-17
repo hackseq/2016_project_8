@@ -1,6 +1,19 @@
 #!/usr/bin/env python
 #
 #
+"""
+Test run the somatic test on phased allele count data
+
+Usage:
+    somatic_test <count_file> <result_file>
+
+Arguments:
+    count_file  Path to phased count data
+    result_file Path to output file
+
+Options:
+    -h --help   Show this message.
+"""
 import os
 import sys
 import subprocess

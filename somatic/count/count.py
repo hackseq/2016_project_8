@@ -1,6 +1,23 @@
 #!/usr/bin/env python
 #
 #
+"""
+Get the counts of alt/ref (hap1, hap2, unphased, chrom, pos,  from VCF file
+
+Usage:
+    count.py [--bed=<bed>] <ref_path> <vcf_path> <bam_path> <output_csv_path>
+
+Arguments:
+    bed                 Optional bed file for filtering
+    ref_path            Path to the reference genome fasta
+    vcf_path            Path to the VCF file for position reads
+    bam_path            Path to the BAM file
+    output_csv_path     Path of the CSV file you want for output
+
+Options:
+    -h --help   Show this message.
+
+"""
 import os
 import sys
 
