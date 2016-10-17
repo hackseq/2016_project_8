@@ -1,16 +1,17 @@
 #!/usr/bin/env python
 #
 #
-import pysam
-import vcf
-import tenkit
-import pyfasta
-import tenkit.bio_io as tk_io
-import tenkit.bam as tk_bam
-import pandas
 import os
 import sys
+
 import docopt
+import pandas
+
+import pyfasta
+import pysam
+import tenkit.bam as tk_bam
+import tenkit.bio_io as tk_io
+import vcf
 
 
 def error(msg):
@@ -149,14 +150,25 @@ def get_allele_read_info(chrom, pos, ref, alt_alleles, min_mapq, bam,
     counts_reformat['pos'] = pos
     return counts_reformat
 
+def annotate_bed_info(counts, bed_file):
+    regs = tk_io.get_target_regions(open(bed_file))
+
+    for c in counts:
+        in_bed = False
+        if regs.has_key(c['chrom']):
+            in_bed = regs[c['chrom']].contains_point(c['pos'])
+
+        c['in_bed'] = in_bed
+
 
 __doc__ = '''
 Get the counts of all - alt/ref, chrom, pos
 
 Usage:
-    count.py <ref_path> <vcf_path> <bam_path> <output_csv_path>
+    count.py [--bed=<bed>] <ref_path> <vcf_path> <bam_path> <output_csv_path>
 
 Arguments:
+    bed                 Optional bed file for filtering
     ref_path            Path to the reference genome fasta
     vcf_path            Path to the VCF file for position reads
     bam_path            Path to the BAM file
@@ -174,7 +186,15 @@ def run():
     bam_path = fixpath(args["<bam_path>"])
     output_csv_path = fixpath(args["<output_csv_path>"])
 
+    bed_path = None
+    if args["--bed"] is not None:
+        bed_path = fixpath(args["--bed"])
+
     counts = get_all_counts(vcf_path, bam_path, ref_path)
+
+    if bed_path is not None:
+        annotate_bed_info(counts, bed_path)
+
     generate_csv_table(counts, output_csv_path)
 
 
