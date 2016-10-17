@@ -45,10 +45,6 @@ def main():
         print("row {0}".format(i))
         table = { 'h1': { 'ref': r.h1_ref, 'alt': r.h1_alt }, 'h2': { 'ref': r.h2_ref, 'alt': r.h2_alt }}
 
-        # for now, skip cases with all 0's
-        if r.h1_ref == 0 and r.h1_alt == 0 and r.h2_ref == 0 and r.h2_alt == 0:
-            continue
-
         ml = max_likelihood(table)
         results.append(ml)
 
@@ -223,16 +219,27 @@ def likelihood_per_error_rate(table, error_rate=None):
     
 
 def max_likelihood(table):
-    likelihood_dict = likelihood_per_error_rate(table, error_rate=None)
-    ((max_likelihood, param), model_name) = max((likelihood, name) for (name, likelihood) in likelihood_dict.items())
-    
-    z = sum(prob for (prob, param) in likelihood_dict.values())
-    cols = {    'g0': likelihood_dict['g0'][0]/z, 
-                'g1_het': likelihood_dict['g1_het'][0]/z, 
-                'g1_hom': likelihood_dict['g1_hom'][0]/z, 
-                'g2': likelihood_dict['g2'][0]/z,
-                'best_model': model_name, 
-                'param': param }
+
+    # for now, write NaN's in all cases with 0's
+    if table['h1']['ref'] == 0 and table['h2']['ref'] == 0 and table['h1']['alt'] == 0 and table['h2']['alt'] == 0:
+        cols = {'g0': 'NaN',
+                'g1_het': 'NaN',
+                'g1_hom': 'NaN',
+                'g2': 'NaN',
+                'best_model': 'NaN',
+                'param': 'NaN'
+                }
+    else:
+        likelihood_dict = likelihood_per_error_rate(table, error_rate=None)
+        ((max_likelihood, param), model_name) = max((likelihood, name) for (name, likelihood) in likelihood_dict.items())
+        
+        z = sum(prob for (prob, param) in likelihood_dict.values())
+        cols = {    'g0': likelihood_dict['g0'][0]/z, 
+                    'g1_het': likelihood_dict['g1_het'][0]/z, 
+                    'g1_hom': likelihood_dict['g1_hom'][0]/z, 
+                    'g2': likelihood_dict['g2'][0]/z,
+                    'best_model': model_name, 
+                    'param': param }
 
     #print("Model: {0} had likelihood: {1}".format(model_name, max_likelihood))
     
