@@ -5,7 +5,33 @@ import pyfasta
 import tenkit.bio_io as tk_io
 import tenkit.bam as tk_bam
 import pandas
+import os
+import sys
+import docopt
 
+
+__doc__ = '''
+Get the counts of all - alt/ref, chrom, pos
+
+Usage:
+    python count.py <ref_path> <vcf_path> <bam_path> <output_csv_path>
+
+Arguments:
+    ref_path            Path to the reference genome fasta
+    vcf_path            Path to the VCF file for position reads
+    bam_path            Path to the BAM file
+    output_csv_path     Path of the CSV file you want for output
+
+Options:
+    -h --help   Show this message.
+'''
+
+def error(msg):
+    print msg
+    sys.exit(1)
+
+def fixpath(path):
+    return os.path.abspath(os.path.expandvars(os.path.expanduser(path)))
 
 def generate_csv_table(counts, csv_path):
     """
@@ -42,7 +68,6 @@ def generate_csv_table(counts, csv_path):
         'un_alt': un_alt
     })
     df.to_csv(csv_path, index=False)
-
 
 def get_all_counts(vcf_path, bam_path, ref):
     """
@@ -155,6 +180,15 @@ def get_allele_read_info(chrom, pos, ref, alt_alleles, min_mapq, bam,
     counts_reformat['pos'] = pos
     return counts_reformat
 
+def run():
+    args = docopt.docopt(__doc__, version=" ")  # do not remove space
+    ref_path = fixpath(args["<ref_path>"])
+    vcf_path = fixpath(args["<vcf_path>"])
+    bam_path = fixpath(args["<bam_path>"])
+    output_csv_path = fixpath(args["<output_csv_path>"])
+
+    counts = get_all_counts(vcf_path, bam_path, ref_path)
+    generate_csv_table(counts, output_csv_path)
 
 if __name__ == '__main__':
-    pass
+    run()
