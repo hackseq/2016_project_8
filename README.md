@@ -20,7 +20,7 @@ Get the counts of alt/ref (hap1, hap2, unphased, chrom, pos,  from VCF file.
 python count.py [--bed=<bed>] <ref_path> <vcf_path> <bam_path> <output_csv_path>
 ```
 
-return value: Saves a CSV file (given by `output_csv_path`) with columns : `alt,chrom,filter,h1_alt,h1_ref,h2_alt,h2_ref,in_bed,pos,ref,un_alt,un_ref`
+return value: Writes to disk a CSV file (given by `output_csv_path`) with columns : `alt,chrom,filter,h1_alt,h1_ref,h2_alt,h2_ref,in_bed,pos,ref,un_alt,un_ref`
 
 #### `somatic_probability.py`
 
