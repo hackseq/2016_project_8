@@ -203,9 +203,9 @@ def g2_likelihood_helper(table, variant_frequency, error_rate = 0.001):
     
     
 def likelihood_per_error_rate(table, error_rate=None):
-    prior_g0 = 1
-    prior_g1 = 1
-    prior_g2 = 1
+    prior_g0 = 1.0
+    prior_g1 = 1.0/1000
+    prior_g2 = 1.0/10000
     
     g0 = g0_likelihood(table, error_rate) * prior_g0
     g1_het = g1_likelihood(table, error_rate, homozygous=False) * prior_g1
