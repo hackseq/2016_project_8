@@ -58,6 +58,13 @@ test_table = { 'h1': { 'ref': 99, 'alt': 5}, 'h2': {'ref': 99, 'alt': 7}}
 
 
 def g0_likelihood(table, error_rate=None):
+    """
+    g0 - scenario where neither of the haplotype has somatic or germline variants.
+
+    :param table:
+    :param error_rate: you can give the error_rate, if None it runs get_optimal_error_rate()
+    :return:
+    """
 
     if error_rate is None:
         error_rate = get_optimal_error_rate(table, (0,0))
@@ -90,9 +97,11 @@ def get_optimal_error_rate(table, mode):
             num = 0.0
             denom = 0.0
         elif error_mode == 0:
+            # if error_mode is 0 (expecting pure wilde type), then considers alt as the error_rate
             num = float(alt)
             denom = float(ref + alt)
         elif error_mode == 1:
+            # if error_mode is 1 (expecting pure mutant), then considers ref as the error_rate
             num = float(ref)
             denom = float(ref + alt)
 
@@ -107,7 +116,7 @@ def get_optimal_error_rate(table, mode):
         optimal_error = float(totalNum) / float(totalDenom)
 
     if optimal_error > 0.1:
-        optimal_error = 0.1
+        optimal_error = 0.1  # cap off the error_rate so we do not miss a somatic variant (say 0.3)
 
     return optimal_error
         
@@ -136,7 +145,7 @@ def g1_likelihood(table, error_rate = None, homozygous=False):
     (higher_vaf_haplotype, lower_vaf_haplotype) = get_higher_vaf_haplotype(table)
 
     if error_rate is None:
-        if homozygous:
+        if homozygous:  # both haplotypes are pure 'alt'
             error_mode = (1,1)
         else:
             error_mode = (1,0) if higher_vaf_haplotype == 'h1' else (0,1)
