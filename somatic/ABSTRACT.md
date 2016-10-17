@@ -13,6 +13,7 @@ Whole exome sequencing of the HCC1954 BrCa cell line was performed at 0%, 25%, 5
 
 To benchmark the accuracy of model selection, 31 somatic variants validated by comparison of 0% and 100% tumor content samples were manually reviewed in IGV and selected as a testing subset. Employing the SMUSH model on this subset correctly identified all variants as somatic in the 25-100% samples and correctly identified 30/31 variants as wild-type in the 0% sample.
 
+
 ## Lay Abstract
 
 In clinical setting for cancer studies, the normal cell sample is usually absent due to logistics and/or monetary limitations. 10x Genomics has specialized genetic data which allows the assignment of an allele to a specific category (haploytype) within the genome by providing long-range information about various parts of it. Cancer-causing variation is generally and partially associated with only one of these categories (haplotypes). The long-range information helps identify and separate out tumor-specific variation from germline and sequencing error, in the absence of normal cell data to compare it with. In this project, we attempt that analysis using an existing variant data for HCC1954 and given long-range data from 10x.
