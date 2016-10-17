@@ -27,43 +27,8 @@ def generate_csv_table(counts, csv_path):
     :param csv_path: path to the csv file
     :return: generates file in csv_path
     """
-    h1_ref = []
-    h1_alt = []
-    h2_ref = []
-    h2_alt = []
-    un_ref = []
-    un_alt = []
-    poss = []
-    chroms = []
-    ref = []
-    alt = []
-    filter = []
-    for d in counts:
-        h1_ref.append(d.get('h1', None).get('ref', None))
-        h1_alt.append(d.get('h1', None).get('alt', None))
-        h2_ref.append(d.get('h2', None).get('ref', None))
-        h2_alt.append(d.get('h2', None).get('alt', None))
-        un_ref.append(d.get('un', None).get('ref', None))
-        un_alt.append(d.get('un', None).get('alt', None))
-        poss.append(d.get('pos', None))
-        chroms.append(d.get('chrom', None))
-        ref.append(d.get('ref', None))
-        alt.append(d.get('alt', None))
-        filter.append(d.get('filter', None))
-    df = pandas.DataFrame({
-        'pos': poss,
-        'chrom': chroms,
-        'h1_ref': h1_ref,
-        'h1_alt': h1_alt,
-        'h2_ref': h2_ref,
-        'h2_alt': h2_alt,
-        'un_ref': un_ref,
-        'un_alt': un_alt,
-        'ref': ref,
-        'alt': alt,
-        'filter': filter
-    })
-    df.to_csv(csv_path, index=False)
+    data_frame = pandas.DataFrame(counts)
+    data_frame.to_csv(csv_path, index=False)
 
 def get_all_counts(vcf_path, bam_path, ref):
     """
@@ -94,15 +59,13 @@ def get_counts_for_record(vcf_rec, bam, fa):
     :param fa:
     :return:
     """
-    # 'ref': ref
     alleles = tk_io.get_record_alt_alleles(vcf_rec)
     ref = tk_io.get_record_ref(vcf_rec)
     r = get_allele_read_info(vcf_rec.CHROM, vcf_rec.POS, ref, alleles, 30, bam, fa)
     r['ref'] = ref
     r['alt'] = alleles[0]
-    r['filter'] = vcf_rec.FILTER
+    r['filter'] = ':'.join(vcf_rec.FILTER)  # TODO: ask Pat if : is ok here
     return r
-
 
 def get_allele_read_info(chrom, pos, ref, alt_alleles, min_mapq, bam, 
                          reference_pyfasta, max_reads=2000, match = 1, 
@@ -175,7 +138,10 @@ def get_allele_read_info(chrom, pos, ref, alt_alleles, min_mapq, bam,
                 if read.mapq >= min_mapq:
                     counts[hap][allele_index] += 1
 
-    counts_reformat = {k: {'ref': v[0], 'alt': v[1]} for (k,v) in counts.items()}
+    counts_reformat = {}
+    for k, v in counts.items():
+        counts_reformat[k + '_' + 'ref']  = v[0]
+        counts_reformat[k + '_' + 'alt'] = v[1]
     counts_reformat['chrom'] = chrom
     counts_reformat['pos'] = pos
     return counts_reformat
