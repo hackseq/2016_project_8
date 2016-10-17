@@ -46,7 +46,7 @@ def generate_csv_table(counts, csv_path):
         un_alt.append(d.get('un', None).get('alt', None))
         poss.append(d.get('pos', None))
         chroms.append(d.get('chrom', None))
-        ref.append(d.get('ref'), None)
+        ref.append(d.get('ref', None))
         alt.append(d.get('alt', None))
     df = pandas.DataFrame({
         'pos': poss,
