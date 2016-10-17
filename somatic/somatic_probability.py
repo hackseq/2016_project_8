@@ -1,6 +1,19 @@
 #!/usr/bin/env python
 #
 #
+"""
+Test run the somatic test on phased allele count data
+
+Usage:
+    somatic_test <count_file> <result_file>
+
+Arguments:
+    count_file  Path to phased count data
+    result_file Path to output file
+
+Options:
+    -h --help   Show this message.
+"""
 import os
 import sys
 import subprocess
@@ -51,7 +64,7 @@ def main():
     df = pandas.DataFrame(results)
 
     final = pandas.concat([count_data, df], axis=1)
-    final.to_csv(result_path)
+    final.to_csv(result_path, index=False)
 
 
 test_table = { 'h1': { 'ref': 99, 'alt': 5}, 'h2': {'ref': 99, 'alt': 7}}
@@ -203,14 +216,15 @@ def g2_likelihood_helper(table, variant_frequency, error_rate = 0.001):
     
     
 def likelihood_per_error_rate(table, error_rate=None):
-    prior_g0 = 1
-    prior_g1 = 1
-    prior_g2 = 1
+    prior_g0 = 1.0
+    prior_g1 = 1.0/1000
+    prior_g2 = 1.0/10000
     
     g0 = g0_likelihood(table, error_rate) * prior_g0
     g1_het = g1_likelihood(table, error_rate, homozygous=False) * prior_g1
     g1_hom = g1_likelihood(table, error_rate, homozygous=True) * prior_g1
-    g2 = g2_likelihood(table, error_rate) * prior_g2
+    g2tuple = g2_likelihood(table, error_rate)
+    g2 = (g2tuple[0] * prior_g2, g2tuple[1])
     
     return {"g0": (g0, 0.0), 
             "g1_het": (g1_het, 0.0),
