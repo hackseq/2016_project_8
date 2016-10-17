@@ -37,6 +37,7 @@ def generate_csv_table(counts, csv_path):
     chroms = []
     ref = []
     alt = []
+    filter = []
     for d in counts:
         h1_ref.append(d.get('h1', None).get('ref', None))
         h1_alt.append(d.get('h1', None).get('alt', None))
@@ -48,6 +49,7 @@ def generate_csv_table(counts, csv_path):
         chroms.append(d.get('chrom', None))
         ref.append(d.get('ref', None))
         alt.append(d.get('alt', None))
+        filter.append(d.get('filter', None))
     df = pandas.DataFrame({
         'pos': poss,
         'chrom': chroms,
@@ -58,7 +60,8 @@ def generate_csv_table(counts, csv_path):
         'un_ref': un_ref,
         'un_alt': un_alt,
         'ref': ref,
-        'alt': alt
+        'alt': alt,
+        'filter': filter
     })
     df.to_csv(csv_path, index=False)
 
@@ -97,6 +100,7 @@ def get_counts_for_record(vcf_rec, bam, fa):
     r = get_allele_read_info(vcf_rec.CHROM, vcf_rec.POS, ref, alleles, 30, bam, fa)
     r['ref'] = ref
     r['alt'] = alleles[0]
+    r['filter'] = vcf_rec.FILTER
     return r
 
 
