@@ -14,3 +14,4 @@ HCC1954 BrCa cell lines were WES/WGS sequenced using ilmn *** at 0, 25, 50, 75 a
 
 ## Lay Abstract
 
+In most studies, the normal cell sample is usually absent. This could be due to logistics or monetary limitations. 10x Genomics has a specialized genetic data which allows the categorization within the genome by providing long-range information. This long-range information helps identify and separate out the clusters (which are categorized) and helps with the analysis of tumor specific genetic variation. Ultimately, in the absence of normal cell data to compare with, we can potentially make use of the 10x's long-range data. In this project, we attempt that using an existing variant data for HCC1954. 
