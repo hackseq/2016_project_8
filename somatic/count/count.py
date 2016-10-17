@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+#
+#
 import pysam
 import vcf
 import tenkit
@@ -9,22 +12,6 @@ import os
 import sys
 import docopt
 
-
-__doc__ = '''
-Get the counts of all - alt/ref, chrom, pos
-
-Usage:
-    python count.py <ref_path> <vcf_path> <bam_path> <output_csv_path>
-
-Arguments:
-    ref_path            Path to the reference genome fasta
-    vcf_path            Path to the VCF file for position reads
-    bam_path            Path to the BAM file
-    output_csv_path     Path of the CSV file you want for output
-
-Options:
-    -h --help   Show this message.
-'''
 
 def error(msg):
     print msg
@@ -48,6 +35,8 @@ def generate_csv_table(counts, csv_path):
     un_alt = []
     poss = []
     chroms = []
+    ref = []
+    alt = []
     for d in counts:
         h1_ref.append(d.get('h1', None).get('ref', None))
         h1_alt.append(d.get('h1', None).get('alt', None))
@@ -65,7 +54,9 @@ def generate_csv_table(counts, csv_path):
         'h2_ref': h2_ref,
         'h2_alt': h2_alt,
         'un_ref': un_ref,
-        'un_alt': un_alt
+        'un_alt': un_alt,
+        'ref': ref,
+        'alt': alt
     })
     df.to_csv(csv_path, index=False)
 
@@ -98,9 +89,12 @@ def get_counts_for_record(vcf_rec, bam, fa):
     :param fa:
     :return:
     """
+    # 'ref': ref
     alleles = tk_io.get_record_alt_alleles(vcf_rec)
     ref = tk_io.get_record_ref(vcf_rec)
     r = get_allele_read_info(vcf_rec.CHROM, vcf_rec.POS, ref, alleles, 30, bam, fa)
+    r['ref'] = ref
+    r['alt'] = alleles[0]
     return r
 
 
@@ -180,6 +174,24 @@ def get_allele_read_info(chrom, pos, ref, alt_alleles, min_mapq, bam,
     counts_reformat['pos'] = pos
     return counts_reformat
 
+
+__doc__ = '''
+Get the counts of all - alt/ref, chrom, pos
+
+Usage:
+    count.py <ref_path> <vcf_path> <bam_path> <output_csv_path>
+
+Arguments:
+    ref_path            Path to the reference genome fasta
+    vcf_path            Path to the VCF file for position reads
+    bam_path            Path to the BAM file
+    output_csv_path     Path of the CSV file you want for output
+
+Options:
+    -h --help   Show this message.
+'''
+
+
 def run():
     args = docopt.docopt(__doc__, version=" ")  # do not remove space
     ref_path = fixpath(args["<ref_path>"])
@@ -189,6 +201,7 @@ def run():
 
     counts = get_all_counts(vcf_path, bam_path, ref_path)
     generate_csv_table(counts, output_csv_path)
+
 
 if __name__ == '__main__':
     run()
