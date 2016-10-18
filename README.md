@@ -3,7 +3,7 @@
 Project Team 8 for HackSeq 2016 in Vancouver BC, Canada. The repository contains two projects.
 
 
-## Project A: Somatic Mutation from Separated Haplotypes (SMUSH) (`/somatic/`)
+## Project Y: Somatic Mutation from Separated Haplotypes (SMUSH) (`/somatic/`)
 
 Calling somatic mutation from tumor tissues only is challenge not only because you do not have a control to facilitate filtering out germline variants but it is difficult to differentiate low frequency somatic mutation from sequence noise/errors. In this study, we investigate whether we can leverage phasing information from reads to help differentiate somatic variants from germline alterations and sequencing errors.
 
@@ -31,7 +31,7 @@ python somatic_test <count_file> <result_file>
 ```
 
 
-## Project B: Metagenome
+## Project X: Metagenome
 
 
 ### Code
